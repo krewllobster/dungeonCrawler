@@ -1,14 +1,10 @@
 import React, { Component } from 'react'
-import weapons from '../data/weapons'
 
 class InfoBar extends Component {
-  constructor() {
-    super()
-  }
 
   render() {
 
-    const {char, floor} = this.props
+    const {char} = this.props
     const titleStyle = {
       height: '100px',
       width: '100%',
@@ -36,7 +32,7 @@ class InfoBar extends Component {
           <tbody>
             <tr>
               {Object.keys(char).map(name => {
-                
+
                 return (
                   <td key={name}>
                     {name}: {char[name]}

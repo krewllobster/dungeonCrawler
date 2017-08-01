@@ -3,12 +3,16 @@ import React, {Component} from 'react'
 class CanvasBoard extends Component {
 
   componentDidMount() {
-    this.updateDungeon()
+    this.updateDungeon(this.props)
     this.updateLight(this.props)
   }
 
   componentWillReceiveProps(nextProps) {
     this.updateLight(nextProps)
+    if(nextProps.items !== this.props.items) {
+      console.log('item should disappear')
+      this.updateDungeon(nextProps)
+    }
   }
 
   updateLight({pos, size, torch}) {
@@ -17,7 +21,7 @@ class CanvasBoard extends Component {
     let y = pos[1]*10
     ctx.clearRect(0,0,size[0]*10, size[1]*10)
     ctx.fillStyle='black'
-    let rad = 20 + 50*torch/100
+    let rad = 20 + 70*torch/100
     const grd = ctx.createRadialGradient(x+5, y+5, 15, x+5, y+5, rad)
     grd.addColorStop(0, 'rgba(0,0,0,0)')
     grd.addColorStop(1, 'black')
@@ -27,9 +31,8 @@ class CanvasBoard extends Component {
     ctx.fillRect(x, y, 10,10)
   }
 
-  updateDungeon() {
+  updateDungeon({rooms, items}) {
     const ctx = this.refs.dungeon.getContext('2d')
-    const {rooms} = this.props
 
     Object.keys(rooms).forEach(id => {
       let room = rooms[id]
@@ -38,6 +41,11 @@ class CanvasBoard extends Component {
       exits.forEach(exit => {
         this.drawExit(position, exit[0], ctx)
       })
+    })
+
+    items.forEach(item => {
+      ctx.fillStyle = item.color
+      ctx.fillRect(item.xpos * 10, item.ypos * 10, 10, 10)
     })
   }
 
