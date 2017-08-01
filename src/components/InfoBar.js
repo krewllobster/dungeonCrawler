@@ -8,9 +8,7 @@ class InfoBar extends Component {
 
   render() {
 
-    const char = this.props.char
-    const {floor} = this.props.dungeon
-
+    const {char, floor} = this.props
     const titleStyle = {
       height: '100px',
       width: '100%',
@@ -35,15 +33,18 @@ class InfoBar extends Component {
           </div>
         </div>
         <table style={infoStyle}>
-          <tr>
-            {Object.keys(char).map(name => {
-              return (
-                <td key={name}>
-                  {name}: {char[name]}
-                </td>
-              )
-            })}
-          </tr>
+          <tbody>
+            <tr>
+              {Object.keys(char).map(name => {
+                
+                return (
+                  <td key={name}>
+                    {name}: {char[name]}
+                  </td>
+                )
+              })}
+            </tr>
+          </tbody>
         </table>
       </div>
     )

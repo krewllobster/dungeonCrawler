@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import InfoBar from './components/InfoBar'
 import Board from './components/Board'
+import CanvasBoard from './components/CanvasBoard'
 import Dungeon from 'dungeon-generator'
 import {level} from './data/dungeons'
 
@@ -18,34 +19,62 @@ class App extends Component {
         pos: null,
       },
       dungeon: {
-        floor: 0,
         walls: [],
         room: null,
         size: null,
         start: null,
-      }
+        children: null,
+      },
+      floor: 0
     }
   }
 
   componentWillMount() {
     let d = new Dungeon(level(50,50))
     d.generate()
-    console.log(d.children)
-    this.setState({
-      dungeon: {
-        walls: d.walls.rows,
-        room: d.initial_room,
-        size: d.size,
-        start: d.start_pos,
-      },
-      character: {
-        pos: d.start_pos,
+    this.setState(prevState => {
+      return {
+        character: {...prevState.character, pos: d.start_pos},
+        dungeon: {
+          walls: d.walls.rows,
+          room: d.initial_room,
+          size: d.size,
+          start: d.start_pos,
+          children: d.children,
+        }
       }
     })
+    document.addEventListener("keydown", this.handleKeyDown.bind(this), false)
   }
 
-  handleKey = event => {
-    console.log('click')
+  handleKeyDown(event) {
+    const {pos} = this.state.character
+    let [x, y] = pos
+    const {walls} = this.state.dungeon
+    Array(-1,0,1).forEach(i => {
+      Array(-1,0,1).forEach(j => {
+        console.log(`${i}, ${j}: ${walls[y + j][x + i]}`)
+      })
+    })
+    let keys = ['ArrowUp', 'ArrowRight', 'ArrowLeft', 'ArrowDown']
+    if (keys.includes(event.key)) {
+      switch(event.key) {
+        case 'ArrowUp': y -= 1; break
+        case 'ArrowDown': y += 1; break
+        case 'ArrowRight': x += 1; break
+        case 'ArrowLeft': x -= 1; break
+      }
+      if (!walls[y+1][x+1]) {
+        this.setState(prevState => {
+          return {
+            character: {
+              ...prevState.character,
+              pos: [x,y]
+            }
+          }
+        })
+      }
+    }
   }
 
   render() {
@@ -56,8 +85,8 @@ class App extends Component {
       height: '100vh',
     }
 
-    const {walls, size, start} = this.state.dungeon
-    const {pos} = this.state.character
+    const {walls, size, start, children, room} = this.state.dungeon
+    const {pos, ...rest} = this.state.character
     return (
       <div
         className="App"
@@ -65,15 +94,10 @@ class App extends Component {
         onKeyDown={this.handleKey}
       >
         <InfoBar
-          char={this.state.character}
-          dungeon={this.state.dungeon}
-          setChar={this.setChar}
+          char={rest}
+          floor={this.state.floor}
         />
-        <Board
-          walls={walls}
-          size={size}
-          charPos={pos}
-        />
+        <CanvasBoard rooms={children} size={size} pos={pos}/>
       </div>
     );
   }

@@ -9,14 +9,14 @@ class Board extends Component {
 
   svg(){
     const {walls, size, charPos} = this.props
-    let x = size[0]/2
-    let y = size[1]/2
+    let x = size[0]
+    let y = size[1]
     let xpos = charPos[0]
     let ypos = charPos[1]
     return (
       <svg
         width="100%" height="100%"
-        viewBox={`${xpos/2} ${ypos/2} ${x} ${y}`}
+        viewBox={`0 0 ${x} ${y}`}
         preserveAspectRatio="xMinYMin slice"
       >
         {walls.map((row, r) => {
