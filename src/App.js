@@ -16,6 +16,7 @@ class App extends Component {
         experience: 0,
         weapon: 'stick',
         attack: 7,
+        torch: 100,
         pos: null,
       },
       dungeon: {
@@ -66,9 +67,12 @@ class App extends Component {
       }
       if (!walls[y+1][x+1]) {
         this.setState(prevState => {
+          let {torch} = prevState.character
+          let newTorch = torch > 1 ? torch - 1 : torch
           return {
             character: {
               ...prevState.character,
+              torch: newTorch,
               pos: [x,y]
             }
           }
@@ -87,6 +91,7 @@ class App extends Component {
 
     const {walls, size, start, children, room} = this.state.dungeon
     const {pos, ...rest} = this.state.character
+    const {torch} = this.state.character
     return (
       <div
         className="App"
@@ -97,7 +102,7 @@ class App extends Component {
           char={rest}
           floor={this.state.floor}
         />
-        <CanvasBoard rooms={children} size={size} pos={pos}/>
+        <CanvasBoard rooms={children} size={size} pos={pos} torch={torch}/>
       </div>
     );
   }

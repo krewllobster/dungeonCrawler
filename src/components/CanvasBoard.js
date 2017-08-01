@@ -4,20 +4,21 @@ class CanvasBoard extends Component {
 
   componentDidMount() {
     this.updateDungeon()
-    this.updateLight()
+    this.updateLight(this.props)
   }
 
   componentWillReceiveProps(nextProps) {
     this.updateLight(nextProps)
   }
 
-  updateLight({pos, size} = this.props) {
+  updateLight({pos, size, torch}) {
     const ctx = this.refs.light.getContext('2d')
     let x = pos[0]*10
     let y = pos[1]*10
     ctx.clearRect(0,0,size[0]*10, size[1]*10)
     ctx.fillStyle='black'
-    const grd = ctx.createRadialGradient(x+5, y+5, 10, x+5, y+5, 70)
+    let rad = 20 + 50*torch/100
+    const grd = ctx.createRadialGradient(x+5, y+5, 15, x+5, y+5, rad)
     grd.addColorStop(0, 'rgba(0,0,0,0)')
     grd.addColorStop(1, 'black')
     ctx.fillStyle = grd
