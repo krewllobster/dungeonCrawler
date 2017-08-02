@@ -5,14 +5,24 @@ class CanvasBoard extends Component {
   componentDidMount() {
     this.updateDungeon(this.props)
     this.updateLight(this.props)
+    this.updatePlayer(this.props)
   }
 
   componentWillReceiveProps(nextProps) {
     this.updateLight(nextProps)
+    this.updatePlayer(nextProps)
     if(nextProps.items !== this.props.items) {
       console.log('item should disappear')
       this.updateDungeon(nextProps)
     }
+  }
+
+  updatePlayer({pos, size}) {
+    let [x, y] = pos
+    const ctx = this.refs.player.getContext('2d')
+    ctx.clearRect(0,0,size[0]*10, size[1]*10)
+    ctx.fillStyle='purple'
+    ctx.fillRect(x*10, y*10, 10,10)
   }
 
   updateLight({pos, size, torch}) {
@@ -27,8 +37,6 @@ class CanvasBoard extends Component {
     grd.addColorStop(1, 'black')
     ctx.fillStyle = grd
     ctx.fillRect(0,0,size[0]*10, size[1]*10)
-    ctx.fillStyle='purple'
-    ctx.fillRect(x, y, 10,10)
   }
 
   updateDungeon({rooms, items}) {
@@ -64,13 +72,17 @@ class CanvasBoard extends Component {
   render() {
     const {size} = this.props
     const canvasStyle = {margin: '30px', backgroundColor: 'black', position: 'absolute', left: '0', right: '0'}
-
+    let [x, y] = size
     return (
       <div style={{width: '100%', height: '100%', backgroundColor: 'black'}}>
         <canvas
           style={canvasStyle}
           ref='dungeon'
-          width={size[0]*10} height={size[1]*10}>
+          width={x*10} height={y*10}>
+        </canvas>
+        <canvas style={{...canvasStyle, backgroundColor: 'none'}}
+          ref='player'
+          width={x*10} height={y*10}>
         </canvas>
         <canvas
           style={{...canvasStyle, backgroundColor: 'none'}}
