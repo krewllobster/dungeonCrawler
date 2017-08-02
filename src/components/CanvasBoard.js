@@ -4,15 +4,14 @@ class CanvasBoard extends Component {
 
   componentDidMount() {
     this.updateDungeon(this.props)
-    this.updateLight(this.props)
+    // this.updateLight(this.props)
     this.updatePlayer(this.props)
   }
 
   componentWillReceiveProps(nextProps) {
-    this.updateLight(nextProps)
+    // this.updateLight(nextProps)
     this.updatePlayer(nextProps)
     if(nextProps.items !== this.props.items) {
-      console.log('item should disappear')
       this.updateDungeon(nextProps)
     }
   }

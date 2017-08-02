@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
-import update from 'immutability-helper'
 import InfoBar from './components/InfoBar'
 import CanvasBoard from './components/CanvasBoard'
 import Dungeon from 'dungeon-generator'
-import {level, randomInt, randomPct} from './data/dungeons'
-import {itemDropTable} from './data/items'
+import Messages from './components/Messages'
+import {level} from './data/dungeons'
+import DungeonLoot from './data/DungeonLoot'
 
 class App extends Component {
   constructor() {
@@ -12,12 +12,10 @@ class App extends Component {
 
     this.state = {
       character: {
-        health: 100,
-        maxHealth: 100,
-        level: 0,
+        health: 20,
+        maxHealth: 20,
+        level: 1,
         experience: 0,
-        weapon: 'stick',
-        attack: 7,
         torch: 100,
         pos: null,
       },
@@ -26,22 +24,32 @@ class App extends Component {
         room: null,
         size: null,
         start: null,
-        children: null,
+        children: null
+      },
+      weapon: {
+        name: 'fists',
+        attack: [0,1],
+        level: -1,
       },
       items: [],
-      itemCollision: [],
-      floor: 0
+      floor: 0,
+      messages: []
     }
   }
 
   componentWillMount() {
-    this.generateDungeon()
+    this.setState({messages: [...this.state.messages, 'Use arrow keys to move. Orange marks are torches, brown are weapons, green heals, and red are enemies (watch out!)']})
+    this.generateDungeon(0)
     document.addEventListener("keydown", this.handleKeyDown.bind(this), false)
   }
 
-  generateDungeon() {
-    let d = new Dungeon(level(60,60))
+  generateDungeon(floor) {
+    let d = new Dungeon(level(60,50))
     d.generate()
+    const loot = new DungeonLoot(d.children, floor)
+    loot.populate()
+
+    const items = loot.allItems
     this.setState(prevState => {
       return {
         character: {...prevState.character, pos: d.start_pos},
@@ -51,44 +59,19 @@ class App extends Component {
           size: d.size,
           start: d.start_pos,
           children: d.children,
-        }
+        },
+      floor,
+      items,
       }
     })
-    this.generateItems(d.children)
   }
 
-  generateItems(rooms) {
-    const onlyRooms = rooms.filter(room => room.constructor.name === "Room")
-
-    const rndRoomPos = (room) => {
-      const {room_size, position} = room
-      let [x, y] = room_size
-      let [xpos, ypos] = position
-      return [randomInt(0, x - 1) + xpos, randomInt(0, y - 1) + ypos]
-    }
-
-    let allItems = []
-    let allItemLocations = []
-
-    onlyRooms.forEach(room => {
-      itemDropTable.forEach(item => {
-        if (randomPct(item.percent)) {
-          let itemPos = rndRoomPos(room)
-          if (!allItemLocations.includes(itemPos)) {
-            allItems.push({
-              id: `${itemPos[0]}:${itemPos[1]}`,
-              type: item.type,
-              xpos: itemPos[0],
-              ypos: itemPos[1],
-              color: item.color,
-            })
-            allItemLocations.push(itemPos)
-          }
-        }
-      })
-    })
-    this.setState({
-      items: allItems
+  setVal(val, values, message) {
+    this.setState(prevState => {
+      return {
+        [val]: {...prevState[val], ...values},
+        messages: [...prevState.messages, message]
+      }
     })
   }
 
@@ -99,25 +82,38 @@ class App extends Component {
     let item = items.find(item => item.id === id)
 
     if(item) {
-      let char = {...this.state.character}
+      let {health, maxHealth} = this.state.character
       let newItems = [...this.state.items].filter(item => item.id !== id)
       switch(item.type) {
         case 'torch':
-          char.torch = 101
+          this.setVal('character', {torch: 120}, item.message)
           break
         case 'health':
-          char.maxHealth += 20
-          char.health += 40
-          if (char.health > char.maxHealth) {char.health = char.maxHealth}
+          health = health + 8 > maxHealth + 2 ? maxHealth + 2 : health + 8
+          this.setVal('character', {health, maxHealth: maxHealth + 2}, item.message)
+          break
+        case 'weapon':
+          if (item.level > this.state.weapon.level) {
+            this.setVal('weapon', {weapon: item}, item.message)
+          }
+          break
+        case 'enemy':
+          this.resolveCombat(item)
+          this.setVal('character', {}, item.message)
           break
         default:
           break
       }
       this.setState({
-        character: char,
         items: newItems
       })
     }
+  }
+
+  resolveCombat(enemy) {
+    let {health, level} = this.state.character
+    let {damage} = this.state.weapon
+    console.log('you fight!')
   }
 
   handleKeyDown(event) {
@@ -157,10 +153,11 @@ class App extends Component {
       flexFlow: 'column',
       height: '100vh',
     }
-    const {items} = this.state
+    const {items, messages} = this.state
     const {size, children} = this.state.dungeon
     const {pos, ...rest} = this.state.character
     const {torch} = this.state.character
+
     return (
       <div
         className="App"
@@ -178,6 +175,7 @@ class App extends Component {
           torch={torch}
           items={items}
         />
+        <Messages messages={messages} />
       </div>
     );
   }
