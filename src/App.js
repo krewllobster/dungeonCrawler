@@ -3,103 +3,120 @@ import InfoBar from './components/InfoBar'
 import CanvasBoard from './components/CanvasBoard'
 import Dungeon from 'dungeon-generator'
 import Messages from './components/Messages'
-import {level} from './data/dungeons'
+import {level, randomInt} from './data/dungeons'
 import DungeonLoot from './data/DungeonLoot'
+import {initialCharacterState, initialDungeonState, initialWeaponState} from './data/initialState'
 
 class App extends Component {
   constructor() {
     super()
 
     this.state = {
-      character: {
-        health: 20,
-        maxHealth: 20,
-        level: 1,
-        experience: 0,
-        torch: 100,
-        pos: null,
-      },
-      dungeon: {
-        walls: [],
-        room: null,
-        size: null,
-        start: null,
-        children: null
-      },
-      weapon: {
-        name: 'fists',
-        attack: [0,1],
-        level: -1,
-      },
+      character: initialCharacterState,
+      dungeon: initialDungeonState,
+      weapon: initialWeaponState,
       items: [],
       floor: 0,
-      messages: []
+      messages: [],
+      combat: false,
     }
   }
 
   componentWillMount() {
-    this.setState({messages: [...this.state.messages, 'Use arrow keys to move. Orange marks are torches, brown are weapons, green heals, and red are enemies (watch out!)']})
-    this.generateDungeon(0)
     document.addEventListener("keydown", this.handleKeyDown.bind(this), false)
+    this.restart(0)
+  }
+
+  restart(level, char = initialCharacterState, weapon = initialWeaponState) {
+    let {dungeon} = this.generateDungeon(level)
+    let messages = []
+    let character = {...char, pos: dungeon.start}
+    this.setState({
+      character,
+      dungeon,
+      weapon: {...weapon},
+      floor: level,
+      messages,
+      combat: false,
+    })
   }
 
   generateDungeon(floor) {
     let d = new Dungeon(level(60,50))
     d.generate()
-    const loot = new DungeonLoot(d.children, floor)
-    loot.populate()
+    const loot = new DungeonLoot(d.walls.rows, floor)
+    d.children.map(child => {
+      let {children, ...rest} = child
+      let roomItems = loot.populate(child)
+      let newChild = {...rest, items: roomItems}
+      console.log(newChild)
+      return newChild
+    })
+    return {
+      dungeon: {
+        walls: d.walls.rows,
+        room: d.initial_room,
+        size: d.size,
+        start: d.start_pos,
+        children: d.children,
+      }
+    }
+  }
 
-    const items = loot.allItems
+  setVal(val, values, message = null) {
+    if (values.torch < 1) values.torch = 1
     this.setState(prevState => {
+      let newMessages = message ? [...prevState.messages, message] : prevState.messages
       return {
-        character: {...prevState.character, pos: d.start_pos},
-        dungeon: {
-          walls: d.walls.rows,
-          room: d.initial_room,
-          size: d.size,
-          start: d.start_pos,
-          children: d.children,
-        },
-      floor,
-      items,
+        [val]: {...prevState[val], ...values},
+        messages: newMessages
       }
     })
   }
 
-  setVal(val, values, message) {
+  pushMessage(message, clear = false) {
+    if (clear) [
+      this.setState({messages: [message]})
+    ]
     this.setState(prevState => {
       return {
-        [val]: {...prevState[val], ...values},
         messages: [...prevState.messages, message]
       }
     })
   }
 
   checkCollision(pos) {
-    const {items} = this.state
+    const {items, weapon, combat} = this.state
+    let {health, maxHealth, torch} = this.state.character
 
     let id = `${pos[0]}:${pos[1]}`
     let item = items.find(item => item.id === id)
 
+    if(!item && !combat) {
+      this.setVal('character', {pos, torch: torch - 1})
+    }
+
     if(item) {
-      let {health, maxHealth} = this.state.character
       let newItems = [...this.state.items].filter(item => item.id !== id)
       switch(item.type) {
         case 'torch':
-          this.setVal('character', {torch: 120}, item.message)
+          this.setVal('character', {torch: 120, pos}, item.message)
           break
         case 'health':
           health = health + 8 > maxHealth + 2 ? maxHealth + 2 : health + 8
-          this.setVal('character', {health, maxHealth: maxHealth + 2}, item.message)
+          this.setVal('character', {health, maxHealth: maxHealth + 2, pos, torch: torch - 1}, item.message)
           break
         case 'weapon':
-          if (item.level > this.state.weapon.level) {
-            this.setVal('weapon', {weapon: item}, item.message)
+          if (item.level > weapon.level) {
+            this.setVal('character', {pos, torch: torch - 1})
+            this.setVal('weapon', {...item}, item.message)
+          } else {
+            this.setVal('character', {pos, torch: torch - 1}, `Another lousy ${item.name}...you throw it away in disgust`)
           }
           break
         case 'enemy':
-          this.resolveCombat(item)
-          this.setVal('character', {}, item.message)
+          this.setVal('character', {pos, torch: torch - 1})
+          this.initiateCombat(item)
           break
         default:
           break
@@ -110,38 +127,51 @@ class App extends Component {
     }
   }
 
-  resolveCombat(enemy) {
-    let {health, level} = this.state.character
-    let {damage} = this.state.weapon
-    console.log('you fight!')
+  initiateCombat(enemy) {
+    let {health, level, experience} = this.state.character
+    let {attack} = this.state.weapon
+    let {hp, damage, name, exp} = enemy
+    this.setState({combat: true})
+    this.pushMessage(`You see a ${enemy.name} crouched before you. It attacks!`)
+    while(health > 0) {
+      if (hp <= 0) {
+        this.setVal('character', {experience: experience + exp}, `You were victorious!`)
+        this.setState({combat: false})
+        return
+      }
+      let eDamage = randomInt(damage)
+      let cDamage = randomInt(attack)
+      this.setVal('character', {health: health - eDamage}, `The ${name} strikes, doing ${eDamage} damage`)
+      health -= eDamage
+      hp -= cDamage
+      this.pushMessage(`You strike the ${name}, doing ${cDamage} damage`)
+    }
+    if(health <= 0) {
+      this.pushMessage('You died. Whoops')
+      this.setState({dungeon: initialDungeonState})
+      this.restart(0)
+    }
+    return
   }
 
   handleKeyDown(event) {
+    event.preventDefault()
     const {pos} = this.state.character
     let [x, y] = pos
     const {walls} = this.state.dungeon
-    let keys = ['ArrowUp', 'ArrowRight', 'ArrowLeft', 'ArrowDown']
+    let keys = ['ArrowUp', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'y', 'n']
     if (keys.includes(event.key)) {
-      switch(event.key) {
-        case 'ArrowUp': y -= 1; break
-        case 'ArrowDown': y += 1; break
-        case 'ArrowRight': x += 1; break
-        case 'ArrowLeft': x -= 1; break
-        default: break
-      }
-      if (!walls[y+1][x+1]) {
-        this.checkCollision([x, y])
-        this.setState(prevState => {
-          let {torch} = prevState.character
-          let newTorch = torch > 1 ? torch - 1 : torch
-          return {
-            character: {
-              ...prevState.character,
-              torch: newTorch,
-              pos: [x,y]
-            }
-          }
-        })
+      if(!this.state.combat) {
+        switch(event.key) {
+          case 'ArrowUp': y -= 1; break
+          case 'ArrowDown': y += 1; break
+          case 'ArrowRight': x += 1; break
+          case 'ArrowLeft': x -= 1; break
+          default: break
+        }
+        if (!walls[y+1][x+1]) {
+          this.checkCollision([x, y])
+        }
       }
     }
   }
@@ -153,7 +183,7 @@ class App extends Component {
       flexFlow: 'column',
       height: '100vh',
     }
-    const {items, messages} = this.state
+    const {items, messages, weapon, floor} = this.state
     const {size, children} = this.state.dungeon
     const {pos, ...rest} = this.state.character
     const {torch} = this.state.character
@@ -166,7 +196,8 @@ class App extends Component {
       >
         <InfoBar
           char={rest}
-          floor={this.state.floor}
+          floor={floor}
+          weapon={weapon}
         />
         <CanvasBoard
           rooms={children}

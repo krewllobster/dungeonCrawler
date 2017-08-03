@@ -3,12 +3,10 @@ import {randomInt} from './dungeons'
 import {weapons, items, enemies} from './items'
 
 class DungeonLoot {
-  constructor(rooms = [], level = 0) {
-    this.rooms = rooms.filter(room => room.constructor.name === "Room")
+  constructor(walls = [], level = 0) {
     const weaponLootTable = new LootTable(weapons, level)
     const enemyLootTable = new LootTable(enemies, level)
     this.items = new LootTable(items(weaponLootTable, enemyLootTable), level)
-    this.allItems = []
   }
 
   rndRoomPos(room) {
@@ -21,19 +19,19 @@ class DungeonLoot {
     return this.items.choose()
   }
 
-  populate() {
+  populate(room) {
     const occupied = []
-    this.rooms.forEach(room => {
-      for (let i = 0; i <= randomInt([1,6]); i++) {
-        let [x, y] = this.rndRoomPos(room)
-        let item = this.choose()()
-        let id = `${x}:${y}`
-        if (item && !occupied.includes(id)) {
-          this.allItems.push({...item, xpos: x, ypos: y, id})
-          occupied.push(id)
-        }
+    const roomItems = []
+    for (let i = 0; i <= randomInt([1,6]); i++) {
+      let [x, y] = this.rndRoomPos(room)
+      let item = this.choose()()
+      let id = `${x}:${y}`
+      if (item && !occupied.includes(id)) {
+        roomItems.push({...item, xpos: x, ypos: y, id})
+        occupied.push(id)
       }
-    })
+    }
+    return roomItems
   }
 }
 

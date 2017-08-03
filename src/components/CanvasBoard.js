@@ -2,21 +2,26 @@ import React, {Component} from 'react'
 
 class CanvasBoard extends Component {
 
+  constructor() {
+    super()
+    this.state= {}
+  }
+
   componentDidMount() {
-    this.updateDungeon(this.props)
-    // this.updateLight(this.props)
-    this.updatePlayer(this.props)
+    this.updateBoard(this.props)
   }
 
   componentWillReceiveProps(nextProps) {
-    // this.updateLight(nextProps)
-    this.updatePlayer(nextProps)
-    if(nextProps.items !== this.props.items) {
-      this.updateDungeon(nextProps)
-    }
+    this.updateBoard(nextProps)
   }
 
-  updatePlayer({pos, size}) {
+  updateBoard({pos, size, torch, rooms, items}) {
+    this.updatePlayer(pos, size)
+    // this.updateLight(pos, size, torch)
+    this.updateDungeon(rooms, items)
+  }
+
+  updatePlayer(pos, size) {
     let [x, y] = pos
     const ctx = this.refs.player.getContext('2d')
     ctx.clearRect(0,0,size[0]*10, size[1]*10)
@@ -24,12 +29,11 @@ class CanvasBoard extends Component {
     ctx.fillRect(x*10, y*10, 10,10)
   }
 
-  updateLight({pos, size, torch}) {
+  updateLight(pos, size, torch) {
     const ctx = this.refs.light.getContext('2d')
     let x = pos[0]*10
     let y = pos[1]*10
     ctx.clearRect(0,0,size[0]*10, size[1]*10)
-    ctx.fillStyle='black'
     let rad = 20 + 70*torch/100
     const grd = ctx.createRadialGradient(x+5, y+5, 15, x+5, y+5, rad)
     grd.addColorStop(0, 'rgba(0,0,0,0)')
@@ -38,21 +42,22 @@ class CanvasBoard extends Component {
     ctx.fillRect(0,0,size[0]*10, size[1]*10)
   }
 
-  updateDungeon({rooms, items}) {
+  updateDungeon(rooms, items) {
     const ctx = this.refs.dungeon.getContext('2d')
 
     Object.keys(rooms).forEach(id => {
       let room = rooms[id]
-      const {position, room_size, exits} = room
+      const {position, room_size, exits, items} = room
       this.drawRoom(position, room_size, ctx)
       exits.forEach(exit => {
         this.drawExit(position, exit[0], ctx)
       })
-    })
-
-    items.forEach(item => {
-      ctx.fillStyle = item.color
-      ctx.fillRect(item.xpos * 10, item.ypos * 10, 10, 10)
+      if (items.length > 0) {
+        items.forEach(item => {
+          ctx.fillStyle = item.color
+          ctx.fillRect(item.xpos * 10, item.ypos * 10, 10, 10)
+        })
+      }
     })
   }
 

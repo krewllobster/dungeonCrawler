@@ -4,7 +4,7 @@ class InfoBar extends Component {
 
   render() {
 
-    const {char} = this.props
+    const {char, weapon} = this.props
     const titleStyle = {
       height: '100px',
       width: '100%',
@@ -39,6 +39,8 @@ class InfoBar extends Component {
                   </td>
                 )
               })}
+              <td>{'Weapon: ' + weapon.name}</td>
+              <td>{`Damage: ${weapon.attack[0]} to ${weapon.attack[1]}`}</td>
             </tr>
           </tbody>
         </table>

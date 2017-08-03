@@ -8,12 +8,12 @@ export const weapons = [
 ]
 
 export const enemies = [
-  {item: {name: 'giant rat', attack: [0,4], health: 5, exp: 20}, weight: [50,20,10,0]},
-  {item: {name: 'kobold', attack: [0,6], health: 8, exp: 50}, weight: [30,15,10,5]},
-  {item: {name: 'giant spider', attack: [1,8], health: 8, exp: 75}, weight: [15,20,30,40]},
-  {item: {name: 'ghost', attack: [2,10], health: 12, exp: 150}, weight: [4,10,15,20]},
-  {item: {name: 'wyvern', attack: [4,12], health: 20, exp: 500}, weight: [1,5,10,15]},
-  {item: {name: 'black dragon', attack: [6,20], health: 40, exp: 4000}, weight: [0,0,2,3]}
+  {item: {name: 'giant rat', damage: [0,4], hp: 5, exp: 20}, weight: [50,20,10,0]},
+  {item: {name: 'kobold', damage: [0,6], hp: 8, exp: 50}, weight: [30,15,10,5]},
+  {item: {name: 'giant spider', damage: [1,8], hp: 8, exp: 75}, weight: [15,20,30,40]},
+  {item: {name: 'ghost', damage: [2,10], hp: 12, exp: 150}, weight: [4,10,15,20]},
+  {item: {name: 'wyvern', damage: [4,12], hp: 20, exp: 500}, weight: [1,5,10,15]},
+  {item: {name: 'black dragon', damage: [6,20], hp: 40, exp: 4000}, weight: [0,0,2,3]}
 ]
 
 export const items = (wepTable, enemyTable) => {
@@ -29,6 +29,6 @@ export const items = (wepTable, enemyTable) => {
       return {
         ...enemy, type: 'enemy', color: 'red', message: `You picked a fight with a ${enemy.name}`}
       }, weight: [5,6,7,8]},
-    {item: () => {return null}, weight: [15,15,15,15]}
+    {item: () => {return null}, weight: [50,50,50,50]}
   ]
 }
