@@ -5,7 +5,6 @@ import Dungeon from 'dungeon-generator'
 import extendDungeon from './data/dungeonExtend'
 import Messages from './components/Messages'
 import {level, randomInt} from './data/dungeons'
-import DungeonLoot from './data/DungeonLoot'
 import {initialCharacterState, initialDungeonState, initialWeaponState} from './data/initialState'
 
 class App extends Component {
