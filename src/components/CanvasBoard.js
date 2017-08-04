@@ -16,9 +16,9 @@ class CanvasBoard extends Component {
   }
 
   updateBoard({pos, size, torch, rooms, items}) {
-    this.updatePlayer(pos, size)
+    if(pos && size) this.updatePlayer(pos, size)
     // this.updateLight(pos, size, torch)
-    this.updateDungeon(rooms, items)
+    if(rooms && items && size) this.updateDungeon(rooms, items, size)
   }
 
   updatePlayer(pos, size) {
@@ -42,22 +42,22 @@ class CanvasBoard extends Component {
     ctx.fillRect(0,0,size[0]*10, size[1]*10)
   }
 
-  updateDungeon(rooms, items) {
+  updateDungeon(rooms, items, size) {
     const ctx = this.refs.dungeon.getContext('2d')
-
+    ctx.clearRect(0,0,size[0]*10, size[1]*10)
     Object.keys(rooms).forEach(id => {
       let room = rooms[id]
-      const {position, room_size, exits, items} = room
+      const {position, room_size, exits} = room
       this.drawRoom(position, room_size, ctx)
       exits.forEach(exit => {
         this.drawExit(position, exit[0], ctx)
       })
-      if (items.length > 0) {
-        items.forEach(item => {
-          ctx.fillStyle = item.color
-          ctx.fillRect(item.xpos * 10, item.ypos * 10, 10, 10)
-        })
-      }
+
+    })
+
+    items.forEach(item => {
+      ctx.fillStyle = item.color
+      ctx.fillRect(item.xpos * 10, item.ypos * 10, 10, 10)
     })
   }
 

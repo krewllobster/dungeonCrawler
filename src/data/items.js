@@ -29,6 +29,6 @@ export const items = (wepTable, enemyTable) => {
       return {
         ...enemy, type: 'enemy', color: 'red', message: `You picked a fight with a ${enemy.name}`}
       }, weight: [5,6,7,8]},
-    {item: () => {return null}, weight: [50,50,50,50]}
+    {item: () => {return null}, weight: [15,15,15,15]}
   ]
 }

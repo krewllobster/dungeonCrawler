@@ -3,35 +3,48 @@ import {randomInt} from './dungeons'
 import {weapons, items, enemies} from './items'
 
 class DungeonLoot {
-  constructor(walls = [], level = 0) {
+  constructor(rooms = [], level = 0) {
+    this.rooms = rooms.filter(room => room.constructor.name === "Room")
     const weaponLootTable = new LootTable(weapons, level)
     const enemyLootTable = new LootTable(enemies, level)
     this.items = new LootTable(items(weaponLootTable, enemyLootTable), level)
+    this.allItems = []
+  }
+
+  print() {
+    this.rooms.forEach(room => {
+      console.log(room.position, room.room_size)
+    })
   }
 
   rndRoomPos(room) {
     const {room_size, position} = room
     const [x, y] = room_size; const [xpos, ypos] = position
-    return [randomInt([0, x - 1]) + xpos, randomInt([0, y - 1]) + ypos]
+    const rndX = randomInt([0, x - 1]) + xpos
+    const rndY = randomInt([0, y - 1]) + ypos
+    return [rndX, rndY]
   }
 
   choose() {
     return this.items.choose()
   }
 
-  populate(room) {
+  populate() {
     const occupied = []
-    const roomItems = []
-    for (let i = 0; i <= randomInt([1,6]); i++) {
-      let [x, y] = this.rndRoomPos(room)
-      let item = this.choose()()
-      let id = `${x}:${y}`
-      if (item && !occupied.includes(id)) {
-        roomItems.push({...item, xpos: x, ypos: y, id})
-        occupied.push(id)
+    this.rooms.forEach(room => {
+      for (let i = 0; i <= randomInt([1,6]); i++) {
+        let [x, y] = this.rndRoomPos(room)
+        let [xpos, ypos] = room.position
+        let [xs, ys] = room.room_size
+        let item = this.choose()()
+        let id = `${x}:${y}`
+        if (item && !occupied.includes(id)) {
+          this.allItems.push({...item, xpos: x, ypos: y, id})
+          occupied.push(id)
+        }
       }
-    }
-    return roomItems
+    })
+    return this.allItems
   }
 }
 

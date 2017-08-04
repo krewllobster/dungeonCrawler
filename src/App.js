@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import InfoBar from './components/InfoBar'
 import CanvasBoard from './components/CanvasBoard'
 import Dungeon from 'dungeon-generator'
+import extendDungeon from './data/dungeonExtend'
 import Messages from './components/Messages'
 import {level, randomInt} from './data/dungeons'
 import DungeonLoot from './data/DungeonLoot'
@@ -24,16 +25,15 @@ class App extends Component {
 
   componentWillMount() {
     document.addEventListener("keydown", this.handleKeyDown.bind(this), false)
-    this.restart(0)
+    this.init(0)
   }
 
-  restart(level, char = initialCharacterState, weapon = initialWeaponState) {
-    let {dungeon} = this.generateDungeon(level)
+  init(level, char = initialCharacterState, weapon = initialWeaponState) {
+    let pos = this.generateDungeonInit(level)
     let messages = []
-    let character = {...char, pos: dungeon.start}
+    let character = {...char, pos}
     this.setState({
       character,
-      dungeon,
       weapon: {...weapon},
       floor: level,
       messages,
@@ -41,26 +41,32 @@ class App extends Component {
     })
   }
 
-  generateDungeon(floor) {
-    let d = new Dungeon(level(60,50))
-    d.generate()
-    const loot = new DungeonLoot(d.walls.rows, floor)
-    d.children.map(child => {
-      let {children, ...rest} = child
-      let roomItems = loot.populate(child)
-      let newChild = {...rest, items: roomItems}
-      console.log(newChild)
-      return newChild
+  restart(level, char = initialCharacterState, weapon = initialWeaponState) {
+    let pos = this.generateDungeonInit(level)
+    let messages = []
+    let character = {...char, pos}
+    this.setState({
+      character,
+      weapon: {...weapon},
+      floor: level,
+      messages,
+      combat: false,
     })
-    return {
+  }
+
+  generateDungeonInit(floor) {
+    let d = new extendDungeon(0)
+    this.setState({
       dungeon: {
         walls: d.walls.rows,
         room: d.initial_room,
         size: d.size,
         start: d.start_pos,
         children: d.children,
-      }
-    }
+      },
+      items: d.allItems
+    })
+    return d.start_pos
   }
 
   setVal(val, values, message = null) {
@@ -148,7 +154,7 @@ class App extends Component {
     }
     if(health <= 0) {
       this.pushMessage('You died. Whoops')
-      this.setState({dungeon: initialDungeonState})
+      this.setState({dungeon: initialDungeonState, items: []})
       this.restart(0)
     }
     return
