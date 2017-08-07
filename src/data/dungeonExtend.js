@@ -50,27 +50,53 @@ class extendDungeon extends Dungeon {
   genItems() {
     let occupied = [this.genId(this.start_pos)]
 
-    this.children.forEach(child => {
+    this.children.map(child => {
       const {tag, position, room_size} = child
+      let roomItems = []
       if (tag === "any") {
-        for (let i = 1; i < 5; i ++) {
-          const itemPos = this.randomPos(room_size, position)
-          const itemId = this.genId(itemPos)
+        for (let i = 1; i < 7; i ++) {
+          const itemRoomPos = this.randomPos(room_size)
+          const itemGlobalPos = this.randomPos(room_size, position)
+          const itemId = this.genId(itemGlobalPos)
           const item = this.items.choose()()
+
           if (!occupied.includes(itemId) && item) {
             occupied.push(itemId)
-            this.allItems.push({...item, xpos: itemPos[0], ypos: itemPos[1], id: itemId})
+            this.allItems.push({...item, xpos: itemGlobalPos[0], ypos: itemGlobalPos[1], id: itemId})
+            roomItems.push({...item, xpos: itemRoomPos[0], ypos: itemRoomPos[1], id: itemId})
           }
         }
       }
+      child.items = roomItems
+      return child
     })
+  }
+
+  getRooms() {
+    return this.children
+  }
+
+  getItems() {
+    return this.allItems
+  }
+
+  getSize() {
+    return this.size
+  }
+
+  getPos() {
+    return this.start_pos
+  }
+
+  getCollision() {
+    return this.walls.rows
   }
 
   genId([x, y]) {
     return `${x}:${y}`
   }
 
-  randomPos([x, y], [xpos, ypos]) {
+  randomPos([x, y], [xpos, ypos] = [0,0]) {
     const rndX = randomInt([0, x - 1]) + xpos
     const rndY = randomInt([0, y - 1]) + ypos
     return [rndX, rndY]

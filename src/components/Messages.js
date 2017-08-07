@@ -3,30 +3,33 @@ import React, {Component} from 'react'
 
 class Messages extends Component {
 
+  shouldComponentUpdate(nextProps) {
+    return nextProps.messages !== this.props.messages
+  }
 
   render() {
 
     const styleFull = {
-      position: 'absolute', right: '0', top: '150px',
-      width: '350px', color: 'white', maxHeight: '400px'
+      position: 'relative', left: '0', top: '15px',
+      width: '400px', color: 'white', maxHeight: '180px',
+      padding: '15px',
+      margin: 'auto',
+      overflow: 'scroll',
     }
 
-    const messages = [...this.props.messages].reverse().slice(0,9).reverse()
-    const styleInner = {position: 'relative', bottom: '0', width: '100%', maxHeight: '100%'}
+    const {messages} = {...this.props}
 
     return (
       <div style={styleFull}>
-        <div style={styleInner}>
-          {messages.map((message, i) => {
-            return (
-              <div key={i} style={{overflow: 'hidden', maxHeight: '100%'}}>
-                <br/>
-                {`${i + 1}: ${message}`}
-                <br/>
-              </div>
-            )
-          })}
-        </div>
+        {messages.map((message, i) => {
+          return (
+            <div key={i} style={{overflow: 'hidden', maxHeight: '100%'}}>
+              <br/>
+              {`${i + 1}: ${message}`}
+              <br/>
+            </div>
+          )
+        })}
       </div>
     )
   }
