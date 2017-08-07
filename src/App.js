@@ -3,7 +3,7 @@ import InfoBar from './components/InfoBar'
 import NewCanvas from './components/newCanvas'
 import extendDungeon from './data/dungeonExtend'
 import Messages from './components/Messages'
-import {randomInt} from './data/dungeons'
+import {randomInt} from './data/utils'
 
 class App extends Component {
   constructor() {

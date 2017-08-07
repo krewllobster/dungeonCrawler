@@ -1,4 +1,4 @@
-import {randomInt} from './dungeons'
+import {randomInt} from './utils'
 
 class LootTable {
   constructor(table = [], level = 0) {

@@ -1,7 +1,7 @@
 import Dungeon from 'dungeon-generator'
 import LootTable from './LootTable'
 import {weapons, items, enemies} from './items'
-import {randomInt} from './dungeons'
+import {randomInt} from './utils'
 
 
 class extendDungeon extends Dungeon {
