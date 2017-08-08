@@ -13,6 +13,9 @@ class NewCanvas extends Component {
       collision: [],
       torch: null,
       alive: true,
+      exit: [],
+      level: null,
+      lights: true,
     }
 
     this.handleKey = this.handleKey.bind(this)
@@ -24,8 +27,10 @@ class NewCanvas extends Component {
     let items = dungeon.getItems()
     let size = dungeon.getSize()
     let pos = dungeon.getPos()
+    let exit = dungeon.getExit()
+    let level = dungeon.getLevel()
     let collision = dungeon.getCollision()
-    this.setState({rooms, items, size, pos, collision, torch, alive})
+    this.setState({rooms, items, size, pos, level, collision, torch, alive, exit})
   }
 
   componentWillReceiveProps(nextProps) {
@@ -36,14 +41,16 @@ class NewCanvas extends Component {
       this.setState({alive: nextProps.alive})
       setTimeout(() => this.props.init(0), 5000)
     }
-    if (this.state.rooms[0] != nextProps.dungeon.getRooms()[0]) {
+    if (this.state.rooms[0] !== nextProps.dungeon.getRooms()[0]) {
       let {dungeon, torch, alive} = nextProps
       let rooms = dungeon.getRooms()
       let items = dungeon.getItems()
       let size = dungeon.getSize()
       let pos = dungeon.getPos()
+      let exit = dungeon.getExit()
+      let level = dungeon.getLevel()
       let collision = dungeon.getCollision()
-      this.setState({rooms, items, size, pos, collision, torch, alive})
+      this.setState({rooms, items, size, pos, level, collision, torch, alive, exit})
       setTimeout(() => this.draw(), 10)
     }
   }
@@ -66,6 +73,7 @@ class NewCanvas extends Component {
       case 'ArrowDown': moveY = 1; break
       case 'ArrowLeft': moveX = -1; break
       case 'ArrowRight': moveX = 1; break
+      case 'l': this.setState({lights: !this.state.lights}); break
       default:
         break
     }
@@ -82,6 +90,9 @@ class NewCanvas extends Component {
 
   checkCollision() {
     const [xPos, yPos] = this.state.pos
+    if(xPos === this.state.exit[0] && yPos === this.state.exit[1]) {
+      this.props.init(this.state.level + 1)
+    }
     const index = this.state.items.findIndex(item => item.id === `${xPos}:${yPos}`)
     if (index >= 0) {
       const item = this.state.items[index]
@@ -98,7 +109,91 @@ class NewCanvas extends Component {
   draw() {
     this.drawRoom()
     this.drawItems()
-    this.drawLight()
+    if(this.state.lights) {
+      this.drawTorch()
+      this.drawLight()
+    }
+  }
+
+  drawTorch() {
+    const [x, y] = this.state.pos
+    const coll = this.state.collision
+    const ctx = this.refs.dungeon.getContext('2d')
+    ctx.scale(20,20)
+    ctx.translate(-(x-10), -(y-10))
+    let [c, r] = [x + 1, y + 1]
+    const grd = ctx.createRadialGradient(10.5,10.5,1.5,10.5,10.5,2+this.state.torch/10)
+    grd.addColorStop(0,'transparent')
+    grd.addColorStop(1,'black')
+    ctx.fillStyle = 'rgba(100,100,0,.02)'
+    let lit = []
+    for(let i = -1; i <= 1; i ++) {
+      for(let j = -1; j <= 1; j ++) {
+        if(!coll[r+j][c+i]) {
+          ctx.fillRect(x+i, y+j, 1, 1)
+          lit.push(`${x+i}:${y+j}`)
+          let prevVal = true
+          for (let k = 2; k <= 5; k++) {
+            if (!coll[r+(j*k)][c+(i*k)] && prevVal) {
+              ctx.fillRect(x+(i*k), y+(j*k), 1, 1)
+              lit.push(`${x+i*k}:${y+j*k}`)
+              if(Math.abs(i) === 1 && Math.abs(j) === 1 && k===3) break;
+            } else {break}
+          }
+        }
+      }
+    }
+    for(let i = -1; i <= 1; i += 2) {
+      for(let j = -1; j <= 1; j += 2) {
+        if(!coll[r+j][c+i]) {
+          if(!coll[r][c+i]) {
+            if(!coll[r+j][c+i+i]) {
+              ctx.fillRect(x+i+i, y+j, 1, 1)
+              lit.push(`${x+i+i}:${y+j}`)
+              if(!coll[r+j+j][c+i+i+i]) {
+                ctx.fillRect(x+i+i+i, y+j+j, 1, 1)
+                lit.push(`${x+i+i+i}:${y+j+j}`)
+              }
+            }
+            if(!coll[r][c+i+i] && !coll[r+j][c+i+i+i]) {
+              ctx.fillRect(x+i+i+i, y+j, 1, 1)
+              lit.push(`${x+i+i+i}:${y+j}`)
+              if(!coll[r+j][c+i*4]) {
+                ctx.fillRect(x+i*4, y+j, 1, 1)
+                lit.push(`${x+i*4}:${y+j}`)
+              }
+            }
+          }
+          if(!coll[r+j][c]) {
+            if(!coll[r+j+j][c+i]) {
+              ctx.fillRect(x+i, y+j+j, 1, 1)
+              lit.push(`${x+i}:${y+j+j}`)
+              if(!coll[r+j+j+j][c+i+i]) {
+                ctx.fillRect(x+i+i, y+j+j+j, 1, 1)
+                lit.push(`${x+i+i}:${y+j+j+j}`)
+              }
+            }
+            if(!coll[r+j+j][c] && !coll[r+j+j+j][c+i]) {
+              ctx.fillRect(x+i, y+j+j+j, 1, 1)
+              lit.push(`${x+i}:${y+j+j+j}`)
+              if(!coll[r+j*4][c+i]) {
+                ctx.fillRect(x+i, y+j*4, 1, 1)
+                lit.push(`${x+i}:${y+j*4}`)
+              }
+            }
+          }
+        }
+      }
+    }
+    for (let i = 0; i < 100; i++) {
+      for (let j = 0; j < 100; j++) {
+        ctx.fillStyle = 'black'
+        if (!lit.includes(`${i}:${j}`)) {
+          ctx.fillRect(i, j, 1, 1)
+        }
+      }
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
   }
 
   drawLight() {
@@ -148,9 +243,11 @@ class NewCanvas extends Component {
     const ctx = this.refs.dungeon.getContext('2d')
     ctx.scale(20,20)
     // ctx.clearRect(0,0,100,100)
-    const {items} = this.state
+    const {items, exit} = this.state
     const [xTrans, yTrans] = this.state.pos
     ctx.translate(-(xTrans-10), -(yTrans-10))
+    ctx.fillStyle = 'blue'
+    ctx.fillRect(exit[0], exit[1], 1, 1)
     items.forEach(item => {
       let {color, xpos, ypos} = item
       ctx.beginPath()

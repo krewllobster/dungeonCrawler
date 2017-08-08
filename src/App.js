@@ -13,7 +13,7 @@ class App extends Component {
       dungeon: null,
       char: null,
       weapon: null,
-      messages: []
+      messages: [],
     }
     this.setTorch = this.setTorch.bind(this)
     this.itemCollision = this.itemCollision.bind(this)
@@ -78,21 +78,28 @@ class App extends Component {
   }
 
   combat(enemy) {
-    let {health, exp, level} = this.state.char
+    let {health, exp, level, torch} = this.state.char
     let {attack} = this.state.weapon
     let {damage, hp} = enemy
     const progression = [0,100,200,400,800,1600,3200,6400,12800,25600]
-    while (health > 0) {
-      hp -= randomInt(attack)
-      if (hp <= 0) {break}
-      health -= randomInt(damage)
+    while (health > 0 && hp > 0) {
+      if (torch <= 50) {
+        health -= randomInt(damage)
+        hp -= randomInt(attack)*level
+      } else {
+        hp -= randomInt(attack)*level
+        if (hp <= 0) {break}
+        health -= randomInt(damage)
+      }
     }
     console.log(exp + enemy.exp, progression.findIndex(i => i > exp+enemy.exp))
+    let newLevel = progression.findIndex(i => i > exp+enemy.exp)
+    console.log(newLevel)
     return {
       newChar: {
         health: health, alive: health > 0,
         exp: exp += enemy.exp,
-        level: progression.findIndex(i => i > exp + enemy.exp),
+        level: newLevel,
       },
       newMessage: `You ${health <= 0 ? 'died to' : 'vanquished'} a ${enemy.name}!`
     }
@@ -100,20 +107,28 @@ class App extends Component {
 
   init(level) {
     const dungeon = new extendDungeon(level)
-    let char =  {
-      exp: 0,
-      health: 20,
-      maxHealth: 20,
-      torch: 100,
-      alive: true,
-      level: 0,
+    let char; let weapon
+    if (level !== 0) {
+      char = this.state.char
+      weapon = this.state.weapon
+    } else {
+      char =  {
+        exp: 0,
+        health: 20,
+        maxHealth: 20,
+        torch: 100,
+        alive: true,
+        level: 1,
+      }
+      weapon = {
+        name: 'fists',
+        attack: [0,2],
+        level: 0,
+      }
     }
-    let weapon = {
-      name: 'fists',
-      attack: [0,2],
-      level: 0,
-    }
-    this.setState({dungeon, char, weapon, messages: [`You are starting level ${level + 1}`]})
+    this.setState({
+      dungeon, char, weapon,
+      messages: ['Welcome to Rogue-Like.\nGreen = health, Brown = weapon\nYellow = Torch, and Red = enemy\nBlue takes you down a level','Make sure you fight in the light! Enemies strike first when your torch is half gone!',`You are starting level ${level + 1}`]})
   }
 
   render() {
@@ -139,6 +154,7 @@ class App extends Component {
             torch={this.state.char.torch}
             setTorch={this.setTorch}
             alive={this.state.char.alive}
+            charLevel={this.state.char.level}
             init={this.init}
           />
         </div>

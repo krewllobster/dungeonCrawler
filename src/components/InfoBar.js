@@ -37,7 +37,7 @@ class InfoBar extends Component {
               <td>{'Level: ' + level}</td>
               <td>{'Torch: ' + torch}</td>
               <td>{'Weapon: ' + weapon.name}</td>
-              <td>{`Damage: ${weapon.attack[0]} to ${weapon.attack[1]}`}</td>
+              <td>{`Damage: ${weapon.attack[0]*level} to ${weapon.attack[1]*level}`}</td>
             </tr>
           </tbody>
         </table>
