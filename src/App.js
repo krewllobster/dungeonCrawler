@@ -128,7 +128,7 @@ class App extends Component {
     }
     this.setState({
       dungeon, char, weapon,
-      messages: ['Welcome to Rogue-Like.\nGreen = health, Brown = weapon\nYellow = Torch, and Red = enemy\nBlue takes you down a level','Make sure you fight in the light! Enemies strike first when your torch is half gone!',`You are starting level ${level + 1}`]})
+      messages: ['Welcome to Rogue-Like.\nGreen = health, Brown = weapon\nYellow = Torch, and Red = enemy\nBlue takes you down a level\nIf you get lost, press "l"','Make sure you fight in the light! Enemies strike first when your torch is half gone!',`You are starting level ${level + 1}`]})
   }
 
   render() {
