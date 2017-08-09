@@ -43,7 +43,7 @@ class extendDungeon extends Dungeon {
 
     this.generate()
 
-    this.genExit()
+    this.genExit(level)
 
     this.genItems()
 
@@ -51,7 +51,7 @@ class extendDungeon extends Dungeon {
   }
 
   genItems() {
-    let occupied = [this.genId(this.start_pos), this.genId(this.exit)]
+    let occupied = [this.genId(this.start_pos), this.genId(this.exit.pos)]
 
     this.children.map(child => {
       const {tag, position, room_size} = child
@@ -74,14 +74,14 @@ class extendDungeon extends Dungeon {
     })
   }
 
-  genExit() {
+  genExit(level) {
     let c = [...this.children].filter(child => child.tag === 'any')
     let r = randomInt([1,c.length-1])
     let exitRoom = c[r]
     let {position, room_size} = exitRoom
     let rndX = position[0] + randomInt([1,room_size[0]-1])
     let rndY = position[1] + randomInt([1,room_size[1]-1])
-    this.exit = [rndX, rndY]
+    this.exit = {type: level < 3 ? 'exit' : 'boss', pos: [rndX, rndY]}
   }
 
   getExit() {

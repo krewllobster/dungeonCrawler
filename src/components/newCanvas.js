@@ -16,13 +16,14 @@ class NewCanvas extends Component {
       exit: [],
       level: null,
       lights: true,
+      win: false,
     }
 
     this.handleKey = this.handleKey.bind(this)
   }
 
   componentWillMount() {
-    let {dungeon, torch, alive} = this.props
+    let {dungeon, torch, alive, win} = this.props
     let rooms = dungeon.getRooms()
     let items = dungeon.getItems()
     let size = dungeon.getSize()
@@ -30,7 +31,7 @@ class NewCanvas extends Component {
     let exit = dungeon.getExit()
     let level = dungeon.getLevel()
     let collision = dungeon.getCollision()
-    this.setState({rooms, items, size, pos, level, collision, torch, alive, exit})
+    this.setState({rooms, items, win, size, pos, level, collision, torch, alive, exit})
   }
 
   componentWillReceiveProps(nextProps) {
@@ -39,10 +40,13 @@ class NewCanvas extends Component {
     }
     if (!nextProps.alive) {
       this.setState({alive: nextProps.alive})
-      setTimeout(() => this.props.init(0), 5000)
+      setTimeout(() => this.props.init(0), 3000)
+    }
+    if (nextProps.win) {
+      this.setState({win: true})
     }
     if (this.state.rooms[0] !== nextProps.dungeon.getRooms()[0]) {
-      let {dungeon, torch, alive} = nextProps
+      let {dungeon, torch, alive, win} = nextProps
       let rooms = dungeon.getRooms()
       let items = dungeon.getItems()
       let size = dungeon.getSize()
@@ -50,7 +54,7 @@ class NewCanvas extends Component {
       let exit = dungeon.getExit()
       let level = dungeon.getLevel()
       let collision = dungeon.getCollision()
-      this.setState({rooms, items, size, pos, level, collision, torch, alive, exit})
+      this.setState({rooms, items, win, size, pos, level, collision, torch, alive, exit})
       setTimeout(() => this.draw(), 10)
     }
   }
@@ -79,7 +83,7 @@ class NewCanvas extends Component {
     }
     this.setState(prevState => {
       let [x, y] = prevState.pos
-      if(prevState.alive && !prevState.collision[moveY + y + 1][moveX + x + 1]) {
+      if(prevState.alive && !this.state.win && !prevState.collision[moveY + y + 1][moveX + x + 1]) {
         this.props.setTorch(-1)
         return {pos: [x + moveX, y + moveY]}
       }
@@ -90,8 +94,9 @@ class NewCanvas extends Component {
 
   checkCollision() {
     const [xPos, yPos] = this.state.pos
-    if(xPos === this.state.exit[0] && yPos === this.state.exit[1]) {
-      this.props.init(this.state.level + 1)
+    const [x, y] = this.state.exit.pos
+    if (xPos === x && yPos === y) {
+      this.props.itemCollision(this.state.exit)
     }
     const index = this.state.items.findIndex(item => item.id === `${xPos}:${yPos}`)
     if (index >= 0) {
@@ -113,6 +118,16 @@ class NewCanvas extends Component {
       this.drawTorch()
       this.drawLight()
     }
+    if(this.state.win) {
+      this.drawWin()
+    }
+  }
+
+  drawWin() {
+    const ctx = this.refs.dungeon.getContext('2d')
+    ctx.fillStyle = 'Green'
+    ctx.font = '50px Courrier'
+    ctx.fillText('YOU WIN!!!', 50, 150)
   }
 
   drawTorch() {
@@ -247,7 +262,7 @@ class NewCanvas extends Component {
     const [xTrans, yTrans] = this.state.pos
     ctx.translate(-(xTrans-10), -(yTrans-10))
     ctx.fillStyle = 'blue'
-    ctx.fillRect(exit[0], exit[1], 1, 1)
+    ctx.fillRect(exit.pos[0], exit.pos[1], 1, 1)
     items.forEach(item => {
       let {color, xpos, ypos} = item
       ctx.beginPath()

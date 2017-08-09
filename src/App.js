@@ -14,6 +14,8 @@ class App extends Component {
       char: null,
       weapon: null,
       messages: [],
+      attempt: 0,
+      win: false,
     }
     this.setTorch = this.setTorch.bind(this)
     this.itemCollision = this.itemCollision.bind(this)
@@ -38,9 +40,24 @@ class App extends Component {
     let charMerge = {}
     let newWeapon = {}
     let message
+    let win = false
     let {health, maxHealth} = this.state.char
     let {level} = this.state.weapon
     switch (item.type) {
+      case 'exit':
+        message = 'You stumble out of a steep staircase -- the door closes behind you'
+        this.init(this.state.dungeon.level + 1)
+        break
+      case 'boss':
+        const {bossChar} = this.bossFight()
+        if (bossChar.alive) {
+          message = 'You found the Big Boss in his lair and slew him. You win!'
+          win = true
+        } else {
+          message = 'You found the Big Boss, but he proved too strong and sliced you in half. You died'
+        }
+        charMerge = bossChar
+        break
       case 'torch':
         charMerge.torch = 100
         message = item.message
@@ -72,16 +89,16 @@ class App extends Component {
       return {
         char: {...prevState.char, ...charMerge},
         weapon: {...prevState.weapon, ...newWeapon},
-        messages: [...prevState.messages, message]
+        messages: [...prevState.messages, message],
+        win
       }
     })
   }
-
-  combat(enemy) {
-    let {health, exp, level, torch} = this.state.char
+  bossFight() {
+    const boss = {name: 'The Big Boss', hp: '150', damage: [5,25], exp: 10000}
+    let {damage, hp} = boss
+    let {health, level, torch} = this.state.char
     let {attack} = this.state.weapon
-    let {damage, hp} = enemy
-    const progression = [0,100,200,400,800,1600,3200,6400,12800,25600]
     while (health > 0 && hp > 0) {
       if (torch <= 50) {
         health -= randomInt(damage)
@@ -92,9 +109,29 @@ class App extends Component {
         health -= randomInt(damage)
       }
     }
-    console.log(exp + enemy.exp, progression.findIndex(i => i > exp+enemy.exp))
+    return {
+      bossChar: {
+        health: health, alive: health > 0
+      }
+    }
+  }
+
+  combat(enemy) {
+    let {health, exp, level, torch} = this.state.char
+    let {attack} = this.state.weapon
+    let {damage, hp} = enemy
+    const progression = [0,100,200,400,800,1600,3200,6400,12800,25600,50000,100000,200000]
+    while (health > 0 && hp > 0) {
+      if (torch <= 50) {
+        health -= randomInt(damage)
+        hp -= randomInt(attack)*level
+      } else {
+        hp -= randomInt(attack)*level
+        if (hp <= 0) {break}
+        health -= randomInt(damage)
+      }
+    }
     let newLevel = progression.findIndex(i => i > exp+enemy.exp)
-    console.log(newLevel)
     return {
       newChar: {
         health: health, alive: health > 0,
@@ -126,9 +163,14 @@ class App extends Component {
         level: 0,
       }
     }
+    let messages = []
+    if(level===0) {messages.push('Welcome to Rogue-Like. Green = health, Brown = weapon, Yellow = Torch, and Red = enemy. Blue takes you down a level. If you get lost, press "L"','Make sure you fight in the light! Enemies strike first when your torch is half gone!')}
+    messages.push(`You are starting level ${level + 1}`)
+    let {attempt} = this.state
+    if (level === 0) {attempt += 1}
     this.setState({
-      dungeon, char, weapon,
-      messages: ['Welcome to Rogue-Like.\nGreen = health, Brown = weapon\nYellow = Torch, and Red = enemy\nBlue takes you down a level\nIf you get lost, press "L"','Make sure you fight in the light! Enemies strike first when your torch is half gone!',`You are starting level ${level + 1}`]})
+      dungeon, char, weapon, messages, attempt
+    })
   }
 
   render() {
@@ -139,14 +181,14 @@ class App extends Component {
       width: '100%',
     }
 
-    let {char, weapon} = this.state
+    let {char, weapon, attempt, win} = this.state
 
     return (
       <div
         className="App"
         style={flexStyle}
       >
-        <InfoBar char={char} weapon={weapon} />
+        <InfoBar char={char} weapon={weapon} attempt={attempt}/>
         <div style={{width: '400px', height: '400px', margin: 'auto'}}>
           <NewCanvas
             dungeon={this.state.dungeon}
@@ -156,6 +198,7 @@ class App extends Component {
             alive={this.state.char.alive}
             charLevel={this.state.char.level}
             init={this.init}
+            win={win}
           />
         </div>
         <Messages messages={[...this.state.messages].reverse()} />
