@@ -70,6 +70,7 @@ class NewCanvas extends Component {
 
   handleKey(event) {
     event.preventDefault()
+    let moves = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
     let moveX = 0
     let moveY = 0
     switch(event.key) {
@@ -83,7 +84,7 @@ class NewCanvas extends Component {
     }
     this.setState(prevState => {
       let [x, y] = prevState.pos
-      if(prevState.alive && !this.state.win && !prevState.collision[moveY + y + 1][moveX + x + 1]) {
+      if(moves.includes(event.key) && prevState.alive && !this.state.win && !prevState.collision[moveY + y + 1][moveX + x + 1]) {
         this.props.setTorch(-1)
         return {pos: [x + moveX, y + moveY]}
       }
