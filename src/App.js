@@ -164,7 +164,7 @@ class App extends Component {
       }
     }
     let messages = []
-    if(level===0) {messages.push('Welcome to Rogue-Like. Green = health, Brown = weapon, Yellow = Torch, and Red = enemy. Blue takes you down a level. If you get lost, press "L"','Make sure you fight in the light! Enemies strike first when your torch is half gone!')}
+    if(level===0) {messages.push('Source code here: https://github.com/krewllobster/dungeonCrawler/', 'Welcome to Rogue-Like. Green = health, Brown = weapon, Yellow = Torch, and Red = enemy. Blue takes you down a level. If you get lost, press "L"','Make sure you fight in the light! Enemies strike first when your torch is half gone!')}
     messages.push(`You are starting level ${level + 1}`)
     let {attempt} = this.state
     if (level === 0) {attempt += 1}
